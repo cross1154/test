@@ -41,7 +41,7 @@ jobs:
               if(!node) return '';
               if(typeof node === 'string') return node;
               if(node.text) return node.text;
-              if(Array.isArray(node)) return node.map(extractText).json('');
+              if(Array.isArray(node)) return node.map(extractText).join('');
               if(node.content) return extractText(node.content);
               return '';
             }

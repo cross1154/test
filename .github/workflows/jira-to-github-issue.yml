@@ -12,7 +12,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const title = "Create Github Issue form Jira";
+            const title = context.payload.client_payload.jira_key;
             const body = "Jira Content";
 
             await github.rest.issues.create({

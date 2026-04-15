@@ -32,6 +32,24 @@ jobs:
             });
 
             const data = await response.json();
+
+            // ===デバッグ: Jira API レスポンス構造を出力します===
+            console.log('Jira Api Response Structure');
+            console.log('-'.repeat(60));    
+            console.log(JSON.stringify(data, null, 2));
+            console.log('-'.repeat(60));
+            console.log('');
+            console.log('Available Fields');
+            console.log('  -Summary: ', data.fields?.summary);
+            console.log('  -Issue Type: ', data.fields?.issueType?.name);
+            console.log('  -Status: ', data.fields?.status?.name);
+            console.log('  -Priority: ', data.fields?.priority?.name);
+            console.log('  -Assignee: ', data.fields?.assignee?.dispalyName);
+            console.log('  -Reporter: ', data.fields?.reporter?.dispalyName);
+            console.log('  -Created: ', data.fields?.created);
+            console.log('  -Labels: ', data.fields?.labels?.join(', '));
+            console.log('-'.repeat(60));
+            
             const summary = data.fields.summary || '';
             core.setOutput('summary', summary);
             const url = `${jiraBaseUrl}/browse/${jiraKey}`

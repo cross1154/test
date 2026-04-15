@@ -44,8 +44,8 @@ jobs:
             console.log('  -Issue Type: ', data.fields?.issueType?.name);
             console.log('  -Status: ', data.fields?.status?.name);
             console.log('  -Priority: ', data.fields?.priority?.name);
-            console.log('  -Assignee: ', data.fields?.assignee?.dispalyName);
-            console.log('  -Reporter: ', data.fields?.reporter?.dispalyName);
+            console.log('  -Assignee: ', data.fields?.assignee?.displayName);
+            console.log('  -Reporter: ', data.fields?.reporter?.displayName);
             console.log('  -Created: ', data.fields?.created);
             console.log('  -Labels: ', data.fields?.labels?.join(', '));
             console.log('-'.repeat(60));

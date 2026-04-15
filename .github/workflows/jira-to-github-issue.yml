@@ -75,7 +75,7 @@ jobs:
                 `> **Jira Issue**: [${jira_key}](${jira_url})`,
                 '', '---', '',
                 description
-              ].json('\n'),
+              ].join('\n'),
               labels: ['from-jira']
             });
             console.log(`Created Github Issue #${issue.data.number}`);

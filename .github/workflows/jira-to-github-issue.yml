@@ -72,7 +72,7 @@ jobs:
                     "content": [
                       {
                         "text": "View Action Run",
-                        "marks": [{"type" : "link", "attrs": { href: `${actionUrl}`}}]
+                        "marks": [{"type" : "link", "attrs": { "href": `${actionUrl}`}}]
                       }
                     ],
                     "type": "paragraph"

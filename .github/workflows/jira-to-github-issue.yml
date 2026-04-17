@@ -27,7 +27,7 @@ jobs:
    
             // Jiraに通知：GitHubアクションが進行中です。
             const actionUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const bodyData = {
+            const commentBodyData = {
               "body": {
                 "content": [
                   {
@@ -89,7 +89,7 @@ jobs:
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
               },
-              body: bodyData
+              body: JSON.stringify(commentBodyData)
             })
             const commentRespData = await commentResp.json();
             console.log('Jira Comment Api Response Structure');

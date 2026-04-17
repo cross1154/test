@@ -26,14 +26,53 @@ jobs:
             const auth = Buffer.from(`${jiraUserEmail}:${jiraApiToken}`).toString("base64");
    
             // Jiraに通知：GitHubアクションが進行中です。
-            const bodyData = `{
+            const actionUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+            const bodyData = {
               "body": {
                 "content": [
                   {
                     "content": [
                       {
-                        "text": "GitHubアクションが進行中です。",
+                        "text": "Github Action executed:",
+                        "marks": [{"type" : "strong"}],
                         "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  },
+                  {
+                    "content": [
+                      {
+                        "text": "Workflow",
+                        "marks": [{"type" : "strong"}],
+                        "type": "text"
+                      },
+                      {
+                        "text": `${context.workflow}`,
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  },
+                  {
+                    "content": [
+                      {
+                        "text": "Run Number:",
+                        "marks": [{"type" : "strong"}],
+                        "type": "text"
+                      },
+                      {
+                        "text": `#${context.runNumber}`,
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  },
+                  {
+                    "content": [
+                      {
+                        "text": "View Action Run",
+                        "marks": [{"type" : "link", "attrs": { href: actionUrl}}]
                       }
                     ],
                     "type": "paragraph"
@@ -42,7 +81,7 @@ jobs:
                 "type": "doc",
                 "version": 1
               }
-            }`;
+            };
             const commentResp = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}/comment`, {
               method: 'POST',
               headers: {

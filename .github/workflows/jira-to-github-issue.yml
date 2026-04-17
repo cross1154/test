@@ -27,74 +27,58 @@ jobs:
    
             // Jiraに通知：GitHubアクションが進行中です。
             const actionUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const commentBodyData = `{
-              "body": {
-                "content": [
+            
+            const commentBodyData = {
+              body: {
+                type: "doc",
+                version: 1,
+                content: [
                   {
-                    "content": [
-                      {
-                        "text": "Github Action executed:",
-                        "marks": [{"type" : "strong"}],
-                        "type": "text"
-                      }
-                    ],
-                    "type": "paragraph"
+                    type: "paragraph",
+                    content: [{ text: "Github Action executed: ", type: "text", marks: [{ type: "strong" }] }]
                   },
                   {
-                    "content": [
-                      {
-                        "text": "Workflow",
-                        "marks": [{"type" : "strong"}],
-                        "type": "text"
-                      },
-                      {
-                        "text": `${context.workflow}`,
-                        "type": "text"
-                      }
-                    ],
-                    "type": "paragraph"
+                    type: "paragraph",
+                    content: [
+                      { text: "Workflow: ", type: "text", marks: [{ type: "strong" }] },
+                      { text: context.workflow, type: "text" }
+                    ]
                   },
                   {
-                    "content": [
-                      {
-                        "text": "Run Number:",
-                        "marks": [{"type" : "strong"}],
-                        "type": "text"
-                      },
-                      {
-                        "text": `#${context.runNumber}`,
-                        "type": "text"
-                      }
-                    ],
-                    "type": "paragraph"
+                    type: "paragraph",
+                    content: [
+                      { text: "Run Number: ", type: "text", marks: [{ type: "strong" }] },
+                      { text: `#${context.runNumber}`, type: "text" }
+                    ]
                   },
                   {
-                    "content": [
-                      {
-                        "text": "View Action Run",
-                        "marks": [{"type" : "link", "attrs": { "href": `${actionUrl}`}}]
+                    type: "paragraph",
+                    content: [
+                      { 
+                        text: "View Action Run", 
+                        type: "text", 
+                        marks: [{ type: "link", attrs: { href: actionUrl } }] 
                       }
-                    ],
-                    "type": "paragraph"
+                    ]
                   }
-                ],
-                "type": "doc",
-                "version": 1
+                ]
               }
-            }`;
+            };
+            
             const commentResp = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}/comment`, {
               method: 'POST',
               headers: {
-                'Authorization': `Basic ${auth}`,
+                'Authorization': `Basic ${Buffer.from(email + ":" + jiraApiToken).toString('base64')}`,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
               },
-              body: commentBodyData
-            })
-            const commentRespData = await commentResp.json();
+              body: JSON.stringify(commentBodyData)
+            });
+            
+            const commentResult = await commentResp.json();
             console.log('Jira Comment Api Response Structure');
             console.log('-'.repeat(60)); 
-            console.log(JSON.stringify(commentRespData, null, 2));
+            console.log(JSON.stringify(commentResult, null, 2));
             console.log('-'.repeat(60));   
             
             const response = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}`, {

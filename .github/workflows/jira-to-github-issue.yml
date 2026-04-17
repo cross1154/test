@@ -98,7 +98,7 @@ jobs:
             console.log('');
             console.log('Available Fields');
             console.log('  -Summary: ', data.fields?.summary);
-            console.log('  -Issue Type: ', data.fields?.issueType?.name);
+            console.log('  -Issue Type: ', data.fields?.issuetype?.name);
             console.log('  -Status: ', data.fields?.status?.name);
             console.log('  -Priority: ', data.fields?.priority?.name);
             console.log('  -Assignee: ', data.fields?.assignee?.displayName);

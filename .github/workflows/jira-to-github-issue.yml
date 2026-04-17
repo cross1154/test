@@ -27,7 +27,7 @@ jobs:
    
             // Jiraに通知：GitHubアクションが進行中です。
             const actionUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const commentBodyData = {
+            const commentBodyData = `{
               "body": {
                 "content": [
                   {
@@ -72,7 +72,7 @@ jobs:
                     "content": [
                       {
                         "text": "View Action Run",
-                        "marks": [{"type" : "link", "attrs": { href: actionUrl}}]
+                        "marks": [{"type" : "link", "attrs": { href: `${actionUrl}`}}]
                       }
                     ],
                     "type": "paragraph"
@@ -81,7 +81,7 @@ jobs:
                 "type": "doc",
                 "version": 1
               }
-            };
+            }`;
             const commentResp = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}/comment`, {
               method: 'POST',
               headers: {
@@ -89,7 +89,7 @@ jobs:
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify(commentBodyData)
+              body: commentBodyData
             })
             const commentRespData = await commentResp.json();
             console.log('Jira Comment Api Response Structure');

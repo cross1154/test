@@ -68,7 +68,7 @@ jobs:
             const commentResp = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}/comment`, {
               method: 'POST',
               headers: {
-                'Authorization': `Basic ${Buffer.from(email + ":" + jiraApiToken).toString('base64')}`,
+                'Authorization': `Basic ${auth}`,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
               },

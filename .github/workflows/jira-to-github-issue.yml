@@ -1,4 +1,4 @@
-name: Create Github Issue form Jira
+name: Create Github Issue from Jira
 
 on:
   repository_dispatch: 
@@ -7,150 +7,81 @@ on:
 jobs:
   create-issue:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
-      - name: Fetch Jira Issue Details
-        id: jira
-        uses: actions/github-script@v8
+      - name: Process Jira to Github Issue
+        id: sync
+        uses: actions/github-script@v7 
         env:
-          JIRA_KEY: ${{github.event.client_payload.jira_key}}
-          JIRA_BASE_URL: ${{secrets.JIRA_BASE_URL}}
-          JIRA_API_TOKEN: ${{secrets.JIRA_API_TOKEN}}
-          JIRA_USER_EMAIL: ${{secrets.JIRA_USER_EMAIL}}
+          JIRA_KEY: ${{ github.event.client_payload.jira_key }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
         with:
           script: |
-            const jiraKey = process.env.JIRA_KEY;
-            const jiraBaseUrl= process.env.JIRA_BASE_URL;
-            const jiraApiToken = process.env.JIRA_API_TOKEN;
-            const jiraUserEmail = process.env.JIRA_USER_EMAIL;
-
-            const auth = Buffer.from(`${jiraUserEmail}:${jiraApiToken}`).toString("base64");
-   
-            // Jiraに通知：GitHubアクションが進行中です。
-            const actionUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const { JIRA_KEY, JIRA_BASE_URL, JIRA_API_TOKEN, JIRA_USER_EMAIL } = process.env;
+            const auth = Buffer.from(`${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}`).toString("base64");
+            const headers = {
+              'Authorization': `Basic ${auth}`,
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            };
             
-            const commentBodyData = {
+            const actionUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const jiraCommentBody = {
               body: {
-                type: "doc",
-                version: 1,
+                type: "doc", version: 1,
                 content: [
-                  {
-                    type: "paragraph",
-                    content: [{ text: "Github Action executed: ", type: "text", marks: [{ type: "strong" }] }]
-                  },
-                  {
-                    type: "paragraph",
-                    content: [
-                      { text: "Workflow: ", type: "text", marks: [{ type: "strong" }] },
-                      { text: context.workflow, type: "text" }
-                    ]
-                  },
-                  {
-                    type: "paragraph",
-                    content: [
-                      { text: "Run Number: ", type: "text", marks: [{ type: "strong" }] },
-                      { text: `#${context.runNumber}`, type: "text" }
-                    ]
-                  },
-                  {
-                    type: "paragraph",
-                    content: [
-                      { 
-                        text: "View Action Run", 
-                        type: "text", 
-                        marks: [{ type: "link", attrs: { href: actionUrl } }] 
-                      }
-                    ]
-                  }
+                  { type: "paragraph", content: [
+                    { text: "Github Action execution started", type: "text", marks: [{ type: "strong" }] }
+                  ]},
+                  { type: "paragraph", content: [
+                    { text: "View run: ", type: "text" },
+                    { text: `#${context.runNumber}`, type: "text", marks: [{ type: "link", attrs: { href: actionUrl } }] }
+                  ]}
                 ]
               }
             };
-            
-            const commentResp = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}/comment`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Basic ${auth}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(commentBodyData)
-            });
-            
-            const commentResult = await commentResp.json();
-            console.log('Jira Comment Api Response Structure');
-            console.log('-'.repeat(60)); 
-            console.log(JSON.stringify(commentResult, null, 2));
-            console.log('-'.repeat(60));   
-            
-            const response = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}`, {
-              headers: {
-                'Authorization': `Basic ${auth}`,
-                'Accept': 'application/json'
-              }
-            });
 
-            const data = await response.json();
-
-            // ===デバッグ: Jira API レスポンス構造を出力します===
-            console.log('Jira Api Response Structure');
-            console.log('-'.repeat(60));    
-            console.log(JSON.stringify(data, null, 2));
-            console.log('-'.repeat(60));
-            console.log('');
-            console.log('Available Fields');
-            console.log('  -Summary: ', data.fields?.summary);
-            console.log('  -Issue Type: ', data.fields?.issuetype?.name);
-            console.log('  -Status: ', data.fields?.status?.name);
-            console.log('  -Priority: ', data.fields?.priority?.name);
-            console.log('  -Assignee: ', data.fields?.assignee?.displayName);
-            console.log('  -Reporter: ', data.fields?.reporter?.displayName);
-            console.log('  -Created: ', data.fields?.created);
-            console.log('  -Labels: ', data.fields?.labels?.join(', '));
-            console.log('-'.repeat(60));
-            
-            const summary = data.fields.summary || '';
-            core.setOutput('summary', summary);
-            const url = `${jiraBaseUrl}/browse/${jiraKey}`
-            core.setOutput('url', url);
-            
-            const extractText = (node) => {
-              if(!node) return '';
-              if(typeof node === 'string') return node;
-              if(node.text) return node.text;
-              if(Array.isArray(node)) return node.map(extractText).join('');
-              if(node.content) return extractText(node.content);
-              return '';
+            try {
+              await fetch(`${JIRA_BASE_URL}/rest/api/3/issue/${JIRA_KEY}/comment`, {
+                method: 'POST', headers, body: JSON.stringify(jiraCommentBody)
+              });
+            } catch (e) {
+              console.error("Failed to post comment to Jira:", e.message);
             }
 
-            const description = extractText(data.fields.description) || '説明なし';
-            core.setOutput('description', description);
+            const response = await fetch(`${JIRA_BASE_URL}/rest/api/3/issue/${JIRA_KEY}`, { headers });
+            if (!response.ok) throw new Error(`Jira API error: ${response.status}`);
+            const data = await response.json();
 
-            console.log(`Fetch Jira Issue: ${jiraKey}`);
-            console.log(`Summary: ${summary}`);
-            console.log(`Url: ${url}`)
-            
-      - name: Create Github Issue
-        env:
-          SUMMARY: ${{steps.jira.outputs.summary}}
-          DESCRIPTION: ${{steps.jira.outputs.description}}
-          URL: ${{steps.jira.outputs.url}}
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const jira_key = context.payload.client_payload.jira_key;
-            const summary = process.env.SUMMARY;
-            const jira_url = process.env.URL;
-            const description = process.env.DESCRIPTION;
-            const body = "Jira Content";
+            const parseADF = (node) => {
+              if (!node) return "";
+              if (node.type === "text") return node.text;
+              if (node.content && Array.isArray(node.content)) {
+                return node.content.map(parseADF).join("");
+              }
+              return (node.type === "paragraph" ? "\n" : "") + (node.content ? node.content.map(parseADF).join("") : "");
+            };
+
+            const summary = data.fields.summary || "No Summary";
+            const description = parseADF(data.fields.description) || "_No description provided._";
+            const jiraUrl = `${JIRA_BASE_URL}/browse/${JIRA_KEY}`;
 
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `[${jira_key}] ${summary}`,
+              title: `[${JIRA_KEY}] ${summary}`,
               body: [
-                `> **Jira Issue**: [${jira_key}](${jira_url})`,
-                '', '---', '',
+                `## 🔗 Jira Reference`,
+                `> **Issue**: [${JIRA_KEY}](${jiraUrl})`,
+                `> **Status**: \`${data.fields.status?.name}\` | **Priority**: \`${data.fields.priority?.name}\``,
+                '',
+                `## 📝 Description`,
                 description
               ].join('\n'),
               labels: ['from-jira']
             });
-            console.log(`Created Github Issue #${issue.data.number}`);
+
+            console.log(`Successfully created GitHub Issue #${issue.data.number}`);

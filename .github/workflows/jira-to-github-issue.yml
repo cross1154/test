@@ -47,7 +47,8 @@ jobs:
               method: 'POST',
               headers: {
                 'Authorization': `Basic ${auth}`,
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
               },
               body: bodyData
             })

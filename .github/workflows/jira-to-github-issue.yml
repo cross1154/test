@@ -24,6 +24,39 @@ jobs:
             const jiraUserEmail = process.env.JIRA_USER_EMAIL;
 
             const auth = Buffer.from(`${jiraUserEmail}:${jiraApiToken}`).toString("base64");
+   
+            // Jiraに通知：GitHubアクションが進行中です。
+            const bodyData = `{
+              "body": {
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "GitHubアクションが進行中です。",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "doc",
+                "version": 1
+              }
+            }`;
+            const commentResp = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}/comment`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Basic ${auth}`,
+                'Accept': 'application/json'
+              },
+              body: bodyData
+            })
+            const commentRespData = await commentResp.json();
+            console.log('Jira Comment Api Response Structure');
+            console.log('-'.repeat(60)); 
+            console.log(JSON.stringify(commentRespData, null, 2));
+            console.log('-'.repeat(60));   
+            
             const response = await fetch(`${jiraBaseUrl}/rest/api/3/issue/${jiraKey}`, {
               headers: {
                 'Authorization': `Basic ${auth}`,
